@@ -4,12 +4,19 @@ public class BoardTester {
     public static void main(String [] args)
     {
         Board b= new Board();
-        b.setBoard("r3k2r/pp1n2pp/2p2q2/b2p1n2/BP1Pp3/P1N2P2/2PB2PP/R2Q1RK1 w");
+        b.setBoard("8/8/8/8/8/8/8/8 w");
         PrintWriter printWriter = new PrintWriter(System.out,true);
-        printWriter.println(b);
-
-        //b.makeMove(new Move(Board.cordsToInt(5,2),Board.cordsToInt(5,4)));
-        //b.makeMove(new Move(Board.cordsToInt(5,7),Board.cordsToInt(5,5)));
-        //printWriter.println(b);
+        int [] squareTester = {0,1,6,7,8,35,48,55,56,63};
+        for(int j=0;j<squareTester.length;j++){
+            b.place(new QueenPiece(true),squareTester[j]);
+            Move [] moves = b.possiblePieceMove(squareTester[j]);
+            for(int i=0;i<moves.length;i++){
+                b.place(new Piece(false),moves[i].end);
+            }
+            //b.makeMove(new Move(Board.cordsToInt(5,2),Board.cordsToInt(5,4)));
+            //b.makeMove(new Move(Board.cordsToInt(5,7),Board.cordsToInt(5,5)));
+            printWriter.println(b);
+            b.makeEmpty();
+        }
     }
 }
