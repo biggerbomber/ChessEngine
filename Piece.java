@@ -21,6 +21,10 @@ public class Piece
     {
         return b==color;
     }
+    public boolean color()
+    {
+        return color;
+    }
     public String toString()
     {
         return "x";
