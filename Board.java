@@ -1,17 +1,17 @@
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-import javax.sql.rowset.BaseRowSet;
+import javax.management.RuntimeErrorException;
 
 import java.io.*;
-import java.nio.charset.UnmappableCharacterException;
-import java.text.BreakIterator;
+
+
 public class Board
 {
     public static String charSet;
     public static final String DEFAULT_STARTING_POSISTION ="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w";
     public int enPassantSquare=-10;
-    private Piece table[];
+    public Piece table[];
     public boolean turn;
     public Board()
     {
@@ -22,6 +22,9 @@ public class Board
     {
         makeEmpty();
         setBoard(fen);
+    }
+    public String printMove(Move m){
+        return table[m.start]+" : "+(char)('a'-1+intToCords(m.start)[0])+""+(intToCords(m.start)[1]+"->"+(char)('a'-1+intToCords(m.end)[0])+""+(intToCords(m.end)[1]));
     }
     public void setBoard(String f)
     {
@@ -86,6 +89,7 @@ public class Board
     public static int[] intToCords(int n)
     {
         if(n<0||n>63){
+            //System.out.print(n);
             throw new InvalidSquareException();
         }
         int [] out =new int[2];
@@ -218,10 +222,23 @@ public class Board
         Move [] out = new Move[pm.length];
         int vSize=0;
         for(int i=0;i<pm.length;i++){
-           // try{
-            if(isLegalMove(pm[i])){
-                //System.out.println(i);
-                out[vSize++]=pm[i];
+            try{
+                Piece t1=table[pm[i].start];
+                Piece t2=table[pm[i].start];
+                if(isLegalMove(pm[i])){
+                    //System.out.println(i);
+                    out[vSize++]=pm[i];
+                }
+                if(t1!=table[pm[i].start] || t2!=table[pm[i].start]){
+                    throw new RuntimeException();
+                }
+            }catch(KingNotFoundException e){
+                System.out.println(this);
+                System.exit(1);
+            }catch(RuntimeException e){
+                System.out.println(this);
+                System.out.println(printMove(pm[i]));
+                
             }
            // }finally{
                // System.out.println(pm[i]);
@@ -234,6 +251,10 @@ public class Board
     }
     public boolean isLegalMove(Move m){
         makeMove(m);
+       // boolean check=false;
+        //System.out.println(cordsToInt('e'-'a'+1, 1));
+        //if(m.start == cordsToInt('e'-'a'+1, 1)){check=true;}
+       
         boolean color = table[m.end].color();
         int kingPos=-1;
         for(int i=0;i<63;i++){
@@ -243,6 +264,19 @@ public class Board
                 break;
             }
         }
+        if(kingPos==-1){
+            throw new KingNotFoundException();
+        }
+        /*try{
+            int n = intToCords(kingPos)[1];
+        }catch(InvalidSquareException e){
+            System.out.println(this);
+            unMakeMove(m);
+            System.out.println(this);
+            System.out.println(printMove(m));
+            throw new InvalidSquareException();
+        } */
+        //if(check){System.out.print("test");}
         //System.out.println("king pos"+kingPos);
         int [] direzioni ={-9,-7,7,9,-8,1,8,-1};
         int [] modulo ={0,7,0,7,9,7,9,0};
@@ -254,9 +288,12 @@ public class Board
                 {
                     unMakeMove(m);
                     return false;
+                }else if(table[i]!=null){
+                    break;
                 } 
             }
         }
+        //if(check){System.out.print("test");}
         //System.out.println("QUA1");
         for(int  d=0;d<4;d++)
         {
@@ -265,9 +302,13 @@ public class Board
                 {
                     unMakeMove(m);
                     return false;
+                }
+                else if(table[i]!=null){
+                    break;
                 } 
             }
         }
+       // if(check){System.out.print("test");}
        // System.out.println("QUA2");
         for(int  d=0;d<direzioni.length;d++)
         {
@@ -280,6 +321,7 @@ public class Board
                 break; 
             }
         }
+       // if(check){System.out.print("test");}
         //System.out.println("QUA3");
         int dirKing = color==Piece.WHITE?-1:1;
         int maxKingRow =color==Piece.WHITE?8:1;
@@ -292,6 +334,7 @@ public class Board
                 return false;
             }
         }
+        //if(check){System.out.print("test");}
         if(kingPos%8!=7 && intToCords(kingPos)[1]!=maxKingRow)
         {
             //System.out.println("\tQUA3b");
@@ -299,6 +342,36 @@ public class Board
             {
                 unMakeMove(m);
                 return false;
+            }
+        }
+        int n= kingPos;
+        int [] kDri ={6,-10,-17,15,-15,17,-6,10};
+        //int [] kMod = { 0,7,6,6,7,0,1,1};
+        int [] kMod = { 1,1,0,0,7,7,6,6};
+        int startD=0;
+        int endD=kDri.length;
+        if(n%8==kMod[0]){
+            startD=2;
+        }
+        if(n%8==kMod[2]){
+            startD=4;
+        }
+        if(n%8==kMod[5]){
+            endD=4;
+        }
+        if(n%8==kMod[7]){
+            endD=6;
+        }
+        for(int  d=startD;d<endD;d++)
+        {
+            for(int i = n+kDri[d];i>=0 && i<64 && (i-+kDri[d])%8!=kMod[d];){
+                // System.out.println("inserito "+ intToCords(i)[0]+ " "+ intToCords(i)[1]+" N: "+i+" Dir: "+d);
+                if(table[i]!=null && table[i].color()!=color && (table[i] instanceof KnightPiece))
+                {
+                    unMakeMove(m); 
+                    return false;
+                } 
+                break;
             }
         }
         //System.out.println("QUA4");
@@ -564,3 +637,4 @@ public class Board
 class NoPieceFoundException  extends RuntimeException{}
 class InvalidSquareException extends RuntimeException{}
 class InvalidFormatSettingException extends RuntimeException{}
+class KingNotFoundException extends RuntimeException{}
