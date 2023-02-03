@@ -1,10 +1,10 @@
 
 public class BoardTester {
-    public static int maxDepth =4;
+    public static int maxDepth =2;
     public static void main(String [] args)
     {
         Board b= new Board();
-        b.setBoard("3k4/2pp4/8/1P2P3/8/8/8/3K4 w");
+        b.setBoard("rnbq1k1r/pp1Pbppp/2p5/1B6/8/8/PPP1NnPP/RNBQK2R b");
 
         //System.out.println(b);
           // try{

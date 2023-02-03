@@ -14,9 +14,24 @@ public class PromotionMove extends Move {
         piecePromoted=piece;
         rev=false;
     }
+    public PromotionMove(int start,int end,int piece,Piece cap)
+    {
+        super(start,end,cap);
+        if(piece<QUEEN || piece >KNIGHT ){
+            throw new IllegalArgumentException();
+        }
+        piecePromoted=piece;
+        rev=false;
+    }
     public Move reverse()
     {
-        PromotionMove out = new PromotionMove(end,start,piecePromoted);
+        PromotionMove out;
+        if(!capture)
+        {
+            out = new PromotionMove(end,start,piecePromoted);
+        }else{
+            out = new PromotionMove(end,start,piecePromoted,pieceCap);
+        }
         out.rev=true;
         return out;
     }

@@ -143,6 +143,7 @@ public class Board
     }
     public void makeMove(Move m)
     {
+
         if(!m.rev)
         {
             //System.out.println(printMove(m));
@@ -216,9 +217,18 @@ public class Board
                 table[m.end+(m.end%8-m.start%8)]=m.pieceCap;
                 return; 
             }
-            table[m.end]=table[m.start];
-            table[m.start]=null;
+            if(m instanceof PromotionMove)
+            {
+
+                table[m.end]= new PawnPiece(table[m.start].color());
+                table[m.start]=null;
+                //System.out.println("qua"+ m.pieceCap);
+            }else{
+                table[m.end]=table[m.start];
+                table[m.start]=null;
+            }
             if(m.capture){
+                //System.out.println("laa "+ m.pieceCap);
                 table[m.start]=m.pieceCap;
             }
             
@@ -237,6 +247,12 @@ public class Board
                 if(isLegalMove(pm[i])){
                     out[vSize++]=pm[i];
                 }
+                /*if(table[2]== null){
+                    System.out.println("----------------------");
+                    System.out.print(printMove(pm[i]));
+                    System.out.println(this);
+                    System.out.println("----------------------");
+                }*/
             }catch(KingNotFoundException e){
                 System.out.println(this);
                 System.exit(1);
@@ -250,6 +266,11 @@ public class Board
         return out;
     }
     public boolean isLegalMove(Move m){
+        if(m instanceof CastelMove)
+        {
+            Move uno;
+            Move due;
+        }
         makeMove(m);
         boolean color = table[m.end].color();
         int kingPos=-1;
@@ -526,10 +547,10 @@ public class Board
                             out=append(out,vSize++,new PromotionMove(n,n+moviment*8,k));
                         }
                         if(n%8!=0 && table[(n+moviment*8)-1]!=null && table[(n+moviment*8)-1].color()!=p.color()){
-                            out=append(out,vSize++,new PromotionMove(n,(n+moviment*8)-1,k));
+                            out=append(out,vSize++,new PromotionMove(n,(n+moviment*8)-1,k,table[(n+moviment*8)-1]));
                         }
                         if(n%8!=7 && table[(n+moviment*8)+1]!=null && table[(n+moviment*8)+1].color()!=p.color()){
-                            out=append(out,vSize++,new PromotionMove(n,(n+moviment*8)+1,k));
+                            out=append(out,vSize++,new PromotionMove(n,(n+moviment*8)+1,k,table[(n+moviment*8)+1]));
                         }
                     }
                 }
