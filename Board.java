@@ -1,11 +1,6 @@
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-
-import javax.management.RuntimeErrorException;
-
 import java.io.*;
-
-
 public class Board
 {
     public static String charSet;
@@ -24,7 +19,8 @@ public class Board
         setBoard(fen);
     }
     public String printMove(Move m){
-        return table[m.start]+" : "+(char)('a'-1+intToCords(m.start)[0])+""+(intToCords(m.start)[1]+"->"+(char)('a'-1+intToCords(m.end)[0])+""+(intToCords(m.end)[1]));
+        return (char)('a'-1+intToCords(m.start)[0])+""+intToCords(m.start)[1]+(char)('a'-1+intToCords(m.end)[0])+""+(intToCords(m.end)[1]);
+        //return table[m.start]+" : "+(char)('a'-1+intToCords(m.start)[0])+""+(intToCords(m.start)[1]+"->"+(char)('a'-1+intToCords(m.end)[0])+""+(intToCords(m.end)[1]));
     }
     public void setBoard(String f)
     {
@@ -149,6 +145,8 @@ public class Board
     {
         if(!m.rev)
         {
+            //System.out.println(printMove(m));
+            //System.out.println(this);
             if(table[m.start]==null){
                 throw new NoPieceFoundException(); 
             }
@@ -161,13 +159,17 @@ public class Board
             enPassantSquare=-10;
             if(m instanceof CastelMove)
             {
-                int row = intToCords(m.start)[0];
+
+                int row = intToCords(m.start)[1];
                 int dir = m.end-m.start;
+
                 table[m.end]=table[m.start];
                 table[m.start]=null;
+
                 int rookColum= Integer.signum(dir)>0?8:1;
-                table[m.start+ Integer.signum(dir)]=table[cordsToInt(row,rookColum)];
-                table[cordsToInt(row,rookColum)]=null;
+                table[m.start+ Integer.signum(dir)]=table[cordsToInt(rookColum,row)];
+                table[cordsToInt(rookColum,row)]=null;
+
             }else if(m instanceof PromotionMove)
             {
                 PromotionMove pm= (PromotionMove)m;
@@ -204,8 +206,15 @@ public class Board
                 int dirRook =(m.end-m.start<0)?8:1;
                 int dirKing =(m.end-m.start<0)?1:-1;
                 table[m.end+dirKing]=null;
-                table[cordsToInt(row, dirRook)]= new RookPiece(table[m.end].color());
+                table[cordsToInt(dirRook,row)]= new RookPiece(table[m.end].color());
                 return;
+            }
+            if(m instanceof FirstPawnMove){
+                enPassantSquare=m.start;
+                table[m.end]=table[m.start];
+                table[m.start]=null;
+                table[m.end+(m.end%8-m.start%8)]=m.pieceCap;
+                return; 
             }
             table[m.end]=table[m.start];
             table[m.start]=null;
@@ -223,41 +232,28 @@ public class Board
         int vSize=0;
         for(int i=0;i<pm.length;i++){
             try{
-                Piece t1=table[pm[i].start];
-                Piece t2=table[pm[i].start];
+                Piece [] test= new Piece[64];
+                System.arraycopy(table,0,test,0,64);
                 if(isLegalMove(pm[i])){
-                    //System.out.println(i);
                     out[vSize++]=pm[i];
-                }
-                if(t1!=table[pm[i].start] || t2!=table[pm[i].start]){
-                    throw new RuntimeException();
                 }
             }catch(KingNotFoundException e){
                 System.out.println(this);
                 System.exit(1);
             }catch(RuntimeException e){
                 System.out.println(this);
+                //System.out.println(e);
                 System.out.println(printMove(pm[i]));
-                
             }
-           // }finally{
-               // System.out.println(pm[i]);
-               // System.out.print(pm[i].start+" "+pm[i].end);
-               //System.out.println(this);
-            //}
         }
         out=resize(out,vSize);
         return out;
     }
     public boolean isLegalMove(Move m){
         makeMove(m);
-       // boolean check=false;
-        //System.out.println(cordsToInt('e'-'a'+1, 1));
-        //if(m.start == cordsToInt('e'-'a'+1, 1)){check=true;}
-       
         boolean color = table[m.end].color();
         int kingPos=-1;
-        for(int i=0;i<63;i++){
+        for(int i=0;i<=63;i++){
             if(table[i]!=null && table[i] instanceof KingPiece && table[i].isColor(color))
             {
                 kingPos=i;
@@ -267,17 +263,6 @@ public class Board
         if(kingPos==-1){
             throw new KingNotFoundException();
         }
-        /*try{
-            int n = intToCords(kingPos)[1];
-        }catch(InvalidSquareException e){
-            System.out.println(this);
-            unMakeMove(m);
-            System.out.println(this);
-            System.out.println(printMove(m));
-            throw new InvalidSquareException();
-        } */
-        //if(check){System.out.print("test");}
-        //System.out.println("king pos"+kingPos);
         int [] direzioni ={-9,-7,7,9,-8,1,8,-1};
         int [] modulo ={0,7,0,7,9,7,9,0};
 
@@ -293,8 +278,6 @@ public class Board
                 } 
             }
         }
-        //if(check){System.out.print("test");}
-        //System.out.println("QUA1");
         for(int  d=0;d<4;d++)
         {
             for(int i = kingPos+direzioni[d];i>=0 && i<64 && (i-+direzioni[d])%8!=modulo[d];i+=direzioni[d]){
@@ -308,8 +291,6 @@ public class Board
                 } 
             }
         }
-       // if(check){System.out.print("test");}
-       // System.out.println("QUA2");
         for(int  d=0;d<direzioni.length;d++)
         {
             for(int i = kingPos+direzioni[d];i>=0 && i<64 && (i-+direzioni[d])%8!=modulo[d];){
@@ -321,23 +302,21 @@ public class Board
                 break; 
             }
         }
-       // if(check){System.out.print("test");}
-        //System.out.println("QUA3");
         int dirKing = color==Piece.WHITE?-1:1;
         int maxKingRow =color==Piece.WHITE?8:1;
         if(kingPos%8!=0 && intToCords(kingPos)[1]!=maxKingRow)
         {
-           // System.out.println("\tQUA3a");
+
             if(table[kingPos+8*dirKing-1] instanceof PawnPiece && !table[kingPos+8*dirKing-1].isColor(color) )
             {
                 unMakeMove(m);
                 return false;
             }
         }
-        //if(check){System.out.print("test");}
+
         if(kingPos%8!=7 && intToCords(kingPos)[1]!=maxKingRow)
         {
-            //System.out.println("\tQUA3b");
+
             if(table[kingPos+8*dirKing+1] instanceof PawnPiece && !table[kingPos+8*dirKing+1].isColor(color))
             {
                 unMakeMove(m);
@@ -346,26 +325,16 @@ public class Board
         }
         int n= kingPos;
         int [] kDri ={6,-10,-17,15,-15,17,-6,10};
-        //int [] kMod = { 0,7,6,6,7,0,1,1};
         int [] kMod = { 1,1,0,0,7,7,6,6};
         int startD=0;
         int endD=kDri.length;
-        if(n%8==kMod[0]){
-            startD=2;
-        }
-        if(n%8==kMod[2]){
-            startD=4;
-        }
-        if(n%8==kMod[5]){
-            endD=4;
-        }
-        if(n%8==kMod[7]){
-            endD=6;
-        }
+        if(n%8==kMod[0]){startD=2;}
+        if(n%8==kMod[2]){startD=4;}
+        if(n%8==kMod[5]){endD=4;}
+        if(n%8==kMod[7]){endD=6;}
         for(int  d=startD;d<endD;d++)
         {
             for(int i = n+kDri[d];i>=0 && i<64 && (i-+kDri[d])%8!=kMod[d];){
-                // System.out.println("inserito "+ intToCords(i)[0]+ " "+ intToCords(i)[1]+" N: "+i+" Dir: "+d);
                 if(table[i]!=null && table[i].color()!=color && (table[i] instanceof KnightPiece))
                 {
                     unMakeMove(m); 
@@ -374,7 +343,6 @@ public class Board
                 break;
             }
         }
-        //System.out.println("QUA4");
         unMakeMove(m);
         return true;
     }
@@ -409,7 +377,8 @@ public class Board
                     out=append(out,vSize++,new Move(n,i)); 
                 }
             }
-        }else if(p instanceof RookPiece)
+        }
+        else if(p instanceof RookPiece)
         {
             for(int d=4;d<direzioni.length;d++)
             {
@@ -438,7 +407,9 @@ public class Board
                     out=append(out,vSize++,new Move(n,i));   
                 }
             }
-        }else if(p instanceof KingPiece){
+        }
+        else if(p instanceof KingPiece)
+        {
             for(int  d=0;d<direzioni.length;d++)
             {
                 for(int i = n+direzioni[d];i>=0 && i<64 && (i-+direzioni[d])%8!=modulo[d];){
@@ -490,7 +461,8 @@ public class Board
                 }
             }
 
-        }else if(p instanceof KnightPiece)
+        }
+        else if(p instanceof KnightPiece)
         {
             //int [] kDri ={-17,-15,-6,10,17,15,6,-10};
             int [] kDri ={6,-10,-17,15,-15,17,-6,10};
@@ -524,7 +496,8 @@ public class Board
                     break;
                 }
             }
-        }else if(p instanceof PawnPiece)
+        }
+        else if(p instanceof PawnPiece)
         {
             int row = intToCords(n)[1];
             int promotionRow;
@@ -543,7 +516,7 @@ public class Board
             if(row==startingRow){
                 if(table[n+moviment*8]==null && table[n+moviment*8*2]==null)
                 {
-                    out=append(out,vSize++,new Move(n,n+moviment*8*2));
+                    out=append(out,vSize++,new FirstPawnMove(n,n+moviment*8*2));
                 }
             }
             if(row==promotionRow){
@@ -607,7 +580,6 @@ public class Board
 		}
 		return newVett;
     }
-    
     public String toString()
     {
        
