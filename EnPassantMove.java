@@ -4,4 +4,13 @@ public class EnPassantMove extends Move {
     {
         super(start,end,p);
     }
+    public Move reverse()
+    {
+        EnPassantMove out;
+       
+        out=new EnPassantMove(end,start,pieceCap);
+        
+        out.rev=true;
+        return out;
+    }
 }

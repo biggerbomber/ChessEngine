@@ -4,7 +4,8 @@ public class BoardTester {
     public static void main(String [] args)
     {
         Board b= new Board();
-        b.setBoard("rnbq1k1r/pp1Pbppp/2p5/1B6/8/8/PPP1NnPP/RNBQK2R b");
+        b.setBoard("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 b");
+        b.makeMove(new FirstPawnMove(Board.cordsToInt(7, 2),Board.cordsToInt(7, 2)));
 
         //System.out.println(b);
           // try{
@@ -23,12 +24,11 @@ public class BoardTester {
             return 1;
         }
         long sum=0;
-        //System.out.println("JJJJJJJ: "+depth);
-        //System.out.println(b);
+
         Move [] moves = b.legalMoves(color);
-        //System.out.println(moves.length);
+        //System.out.println("DEPTH: "+depth +"\n"+b);
         for(int i=0;i<moves.length;i++){
-            //System.out.println(b.printMove(moves[i]));
+
             b.makeMove(moves[i]);  
             long temp=positionTester(b,depth-1,!color);
             sum+=temp;

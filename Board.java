@@ -1,5 +1,8 @@
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+
+import javax.xml.stream.events.EndDocument;
+
 import java.io.*;
 public class Board
 {
@@ -149,9 +152,12 @@ public class Board
             //System.out.println(printMove(m));
             //System.out.println(this);
             if(table[m.start]==null){
+                //System.out.println(printMove(m));
+                System.out.println(this);
                 throw new NoPieceFoundException(); 
             }
             if(m instanceof FirstPawnMove){
+                ((FirstPawnMove)m).prevEnPass=enPassantSquare;
                 enPassantSquare=m.end+(table[m.start].isColor(Piece.WHITE)?8:-8);
                 table[m.end]=table[m.start];
                 table[m.start]=null;
@@ -193,12 +199,14 @@ public class Board
                 table[m.end]=table[m.start];
                 table[m.start]=null;
                 int dir = Integer.signum(m.end-m.start);
-                table[m.end-dir]=null;
+                table[m.start-dir]=null;
             }else{
-                table[m.end]=table[m.start];
+                Piece temp=table[m.start];
                 table[m.start]=null;
+                table[m.end]=temp;  
             }
         }else{
+            //System.out.println("REV "+printMove(m));
             if(m instanceof CastelMove){
                 table[m.end]=table[m.start];
                 table[m.start]=null;
@@ -210,12 +218,15 @@ public class Board
                 table[cordsToInt(dirRook,row)]= new RookPiece(table[m.end].color());
                 return;
             }
-            if(m instanceof FirstPawnMove){
+            if(m instanceof EnPassantMove){
                 enPassantSquare=m.start;
                 table[m.end]=table[m.start];
                 table[m.start]=null;
-                table[m.end+(m.end%8-m.start%8)]=m.pieceCap;
+                table[m.end+Integer.signum(m.end-m.start)]=m.pieceCap;
                 return; 
+            }
+            if(m instanceof FirstPawnMove){
+                enPassantSquare=((FirstPawnMove)m).prevEnPass;
             }
             if(m instanceof PromotionMove)
             {
@@ -224,8 +235,9 @@ public class Board
                 table[m.start]=null;
                 //System.out.println("qua"+ m.pieceCap);
             }else{
-                table[m.end]=table[m.start];
+                Piece temp=table[m.start];
                 table[m.start]=null;
+                table[m.end]=temp; 
             }
             if(m.capture){
                 //System.out.println("laa "+ m.pieceCap);
@@ -247,7 +259,7 @@ public class Board
                 if(isLegalMove(pm[i])){
                     out[vSize++]=pm[i];
                 }
-                /*if(table[2]== null){
+                /*if(table[cordsToInt(3,6)] instanceof PawnPiece){
                     System.out.println("----------------------");
                     System.out.print(printMove(pm[i]));
                     System.out.println(this);
@@ -255,10 +267,11 @@ public class Board
                 }*/
             }catch(KingNotFoundException e){
                 System.out.println(this);
+                System.out.println("king not found");
                 System.exit(1);
             }catch(RuntimeException e){
                 System.out.println(this);
-                //System.out.println(e);
+                System.out.println(e);
                 System.out.println(printMove(pm[i]));
             }
         }
@@ -270,6 +283,15 @@ public class Board
         {
             Move uno;
             Move due;
+            int row = intToCords(m.start)[1];
+            int dir = Integer.signum(m.end-m.start);
+
+            uno= new Move(m.start,m.start);
+            due = new Move(m.start,m.start+dir);
+            if(!isLegalMove(uno) || !isLegalMove(due))
+            {
+                return false;
+            }
         }
         makeMove(m);
         boolean color = table[m.end].color();
@@ -561,12 +583,12 @@ public class Board
                     }
                     if(n%8!=0 && table[(n+moviment*8)-1]!=null && table[(n+moviment*8)-1].color()!=p.color()){
                         out=append(out,vSize++,new Move(n,(n+moviment*8)-1,table[(n+moviment*8)-1]));
-                    }else if((n+moviment*8)-1 == enPassantSquare){
+                    }else if(n%8!=0 && (n+moviment*8)-1 == enPassantSquare){
                         out=append(out,vSize++,new EnPassantMove(n,(n+moviment*8)-1,table[n-1]));
                     }
                     if(n%8!=7 && table[(n+moviment*8)+1]!=null  && table[(n+moviment*8)+1].color()!=p.color()){
                         out=append(out,vSize++,new Move(n,(n+moviment*8)+1,table[(n+moviment*8)+1]));
-                    }else if((n+moviment*8)+1 == enPassantSquare){
+                    }else if(n%8!=7 && (n+moviment*8)+1 == enPassantSquare){
                         out=append(out,vSize++,new EnPassantMove(n,(n+moviment*8)+1,table[n+1]));
                     }
                 }
