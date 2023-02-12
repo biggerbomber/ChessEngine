@@ -1,16 +1,15 @@
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-import javax.xml.stream.events.EndDocument;
-
 import java.io.*;
 public class Board
 {
     public static String charSet;
-    public static final String DEFAULT_STARTING_POSISTION ="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w";
+    public static final String DEFAULT_STARTING_POSISTION ="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public int enPassantSquare=-10;
     public Piece table[];
     public boolean turn;
+    public boolean [] rightCastle;
     public Board()
     {
         makeEmpty();
@@ -28,17 +27,23 @@ public class Board
     public void setBoard(String f)
     {
         makeEmpty();
-        Scanner fen= new Scanner(f);
-        fen.useDelimiter("/| ");
-        int pos=0;
-        while(fen.hasNext())
+        //Scanner fen= new Scanner(f);
+        //fen.useDelimiter("/| ");
+        //int pos=0;
+        String [] boardFen = f.split(" ");
+        if(boardFen.length<4)
         {
-            String row=fen.next();
-           // System.out.println("ROW: "+row);
-            if(!fen.hasNext()){
-                turn=row.equals("w");
-                continue;
-            }
+            throw new InvalidFormatFenException();
+        }
+
+        //pezzi
+        Scanner rows = new Scanner(boardFen[0]);
+        rows.useDelimiter("/");
+        int pos=0;
+        while(rows.hasNext())
+        {
+            
+            String row=rows.next();
             for(int i=0;i<row.length();i++)
             {
                 char c= row.charAt(i);
@@ -75,7 +80,49 @@ public class Board
 
             }
         }
-        fen.close();
+
+        //turno
+        if(!(boardFen[1].equals("w")||boardFen[1].equals("b")))
+        {
+            throw new InvalidFormatFenException();
+        }
+        turn=boardFen[1].equals("w");
+
+
+        //castello
+        if(boardFen[2].contains("K"))
+        {
+            rightCastle[0]=true;
+        }
+        if(boardFen[2].contains("Q"))
+        {
+            rightCastle[1]=true;
+        }
+        if(boardFen[2].contains("k"))
+        {
+            rightCastle[2]=true;
+        }   
+        if(boardFen[2].contains("q"))
+        {
+            rightCastle[3]=true;
+        }
+
+
+        // en passant square
+        enPassantSquare=-10;
+        if(!boardFen[3].contains("-"))
+        {
+            char row = boardFen[3].charAt(0);
+            char colum = boardFen[3].charAt(1);
+            if(row<'a'||row>'h'||colum<'1'||colum>'8')
+            {
+                throw new InvalidFormatFenException();
+            }
+            enPassantSquare = Board.cordsToInt(row-'a', colum-'0');
+        }
+
+
+        
 
     }
     public static int cordsToInt(int x,int y)
@@ -99,6 +146,11 @@ public class Board
     public void makeEmpty()
     {        
         table= new Piece[64];
+        rightCastle =  new boolean[4];
+        for(int i=0;i<rightCastle.length;i++)
+        {
+            rightCastle[i]=false;
+        }
         try(FileReader file = new FileReader("settings.txt");
             Scanner settings = new Scanner(file))
         {
@@ -156,6 +208,7 @@ public class Board
                 System.out.println(this);
                 throw new NoPieceFoundException(); 
             }
+            table[m.start].moved=true;
             if(m instanceof FirstPawnMove){
                 ((FirstPawnMove)m).prevEnPass=enPassantSquare;
                 enPassantSquare=m.end+(table[m.start].isColor(Piece.WHITE)?8:-8);
@@ -176,6 +229,7 @@ public class Board
                 int rookColum= Integer.signum(dir)>0?8:1;
                 table[m.start+ Integer.signum(dir)]=table[cordsToInt(rookColum,row)];
                 table[cordsToInt(rookColum,row)]=null;
+                table[m.start+ Integer.signum(dir)].moved=true;
 
             }else if(m instanceof PromotionMove)
             {
@@ -194,12 +248,13 @@ public class Board
                     table[pm.end]=new KnightPiece(table[pm.start].color());
                 }
                 table[m.start]=null;
+                table[pm.end].moved=true;
             }else if(m instanceof EnPassantMove)
             {
                 table[m.end]=table[m.start];
                 table[m.start]=null;
-                int dir = Integer.signum(m.end-m.start);
-                table[m.start-dir]=null;
+                int dir = Integer.signum(m.end%8-m.start%8);
+                table[m.start+dir]=null;
             }else{
                 Piece temp=table[m.start];
                 table[m.start]=null;
@@ -207,6 +262,7 @@ public class Board
             }
         }else{
             //System.out.println("REV "+printMove(m));
+            table[m.start].moved=m.beforeMoved;
             if(m instanceof CastelMove){
                 table[m.end]=table[m.start];
                 table[m.start]=null;
@@ -216,13 +272,14 @@ public class Board
                 int dirKing =(m.end-m.start<0)?1:-1;
                 table[m.end+dirKing]=null;
                 table[cordsToInt(dirRook,row)]= new RookPiece(table[m.end].color());
+                table[cordsToInt(dirRook,row)].moved=false;
                 return;
             }
             if(m instanceof EnPassantMove){
                 enPassantSquare=m.start;
                 table[m.end]=table[m.start];
                 table[m.start]=null;
-                table[m.end+Integer.signum(m.end-m.start)]=m.pieceCap;
+                table[m.end-Integer.signum(m.end%8-m.start%8)]=m.pieceCap;
                 return; 
             }
             if(m instanceof FirstPawnMove){
@@ -242,6 +299,7 @@ public class Board
             if(m.capture){
                 //System.out.println("laa "+ m.pieceCap);
                 table[m.start]=m.pieceCap;
+                table[m.start].moved=m.befMovcap;
             }
             
         }
@@ -254,8 +312,8 @@ public class Board
         int vSize=0;
         for(int i=0;i<pm.length;i++){
             try{
-                Piece [] test= new Piece[64];
-                System.arraycopy(table,0,test,0,64);
+                //Piece [] test= new Piece[64];
+                //System.arraycopy(table,0,test,0,64);
                 if(isLegalMove(pm[i])){
                     out[vSize++]=pm[i];
                 }
@@ -283,7 +341,7 @@ public class Board
         {
             Move uno;
             Move due;
-            int row = intToCords(m.start)[1];
+           //int row = intToCords(m.start)[1];
             int dir = Integer.signum(m.end-m.start);
 
             uno= new Move(m.start,m.start);
@@ -413,7 +471,7 @@ public class Board
                 for(int i = n+direzioni[d];i>=0 && i<64 && (i-+direzioni[d])%8!=modulo[d];i+=direzioni[d]){
                     if(table[i]!=null && table[i].color()!=p.color())
                     {
-                        out=append(out,vSize++,new Move(n,i,table[i])); 
+                        out=append(out,vSize++,new Move(n,i,table[i],table[i].isMoved())); 
                         break;
                     }
                     if(table[i]!=null)break; 
@@ -423,16 +481,17 @@ public class Board
         }
         else if(p instanceof RookPiece)
         {
+            //System.out.println("TEst MOved "+ table[n].moved);
             for(int d=4;d<direzioni.length;d++)
             {
                 for(int i = n+direzioni[d];i>=0 && i<64 &&  (i-+direzioni[d])%8!=modulo[d];i+=direzioni[d]){
                     if(table[i]!=null && table[i].color()!=p.color())
                     {
-                        out=append(out,vSize++,new Move(n,i,table[i])); 
+                        out=append(out,vSize++,new Move(n,i,table[i],table[n].moved,table[i].isMoved())); 
                         break;
                     }
                     if(table[i]!=null)break; 
-                    out=append(out,vSize++,new Move(n,i));  
+                    out=append(out,vSize++,new Move(n,i,table[n].moved));  
                 }
             }
         }
@@ -443,7 +502,7 @@ public class Board
                 for(int i = n+direzioni[d];i>=0 && i<64 && (i-+direzioni[d])%8!=modulo[d];i+=direzioni[d]){
                     if(table[i]!=null && table[i].color()!=p.color())
                     {
-                        out=append(out,vSize++,new Move(n,i,table[i])); 
+                        out=append(out,vSize++,new Move(n,i,table[i],table[i].isMoved())); 
                         break;
                     } 
                     if(table[i]!=null)break; 
@@ -458,18 +517,19 @@ public class Board
                 for(int i = n+direzioni[d];i>=0 && i<64 && (i-+direzioni[d])%8!=modulo[d];){
                     if(table[i]!=null && table[i].color()!=p.color())
                     {
-                        out=append(out,vSize++,new Move(n,i,table[i])); 
+                        out=append(out,vSize++,new Move(n,i,table[i],table[n].moved,table[i].isMoved())); 
                         break;
                     } 
                     if(table[i]!=null)break; 
-                    out=append(out,vSize++,new Move(n,i));
+                    out=append(out,vSize++,new Move(n,i,table[n].moved));
                     break;
                 }
             }
             if(!p.isMoved()&& n%8==4){
+
                 int row=7*(p.isColor(Piece.WHITE)?0:1)+1;
-               // System.out.println("Row"+row+" N: "+n);
-               // System.out.println(table[cordsToInt(1,row)]+" "+cordsToInt(1,row));
+                //System.out.println("Row"+row+" N: "+n);
+               // System.out.println(table[cordsToInt(1,row)].isMoved()+" "+cordsToInt(1,row));
                // System.out.println(table[cordsToInt(1,row)].color()==p.color());
                 if(table[cordsToInt(1,row)] instanceof RookPiece && !table[cordsToInt(1,row)].isMoved() && table[cordsToInt(1,row)].color()==p.color())
                 {
@@ -483,8 +543,8 @@ public class Board
                             break;
                         }
                     }
-                    //System.out.println(valid+" "+row);
-                    if(valid){
+                   // System.out.println(valid+" "+row);
+                    if(valid&&rightCastle[p.isColor(Piece.WHITE)?1:3]){
                         out=append(out,vSize++,new CastelMove(n,n-2));
                     }
                 }
@@ -498,7 +558,7 @@ public class Board
                             break;
                         }
                     }
-                    if(valid){
+                    if(valid&&rightCastle[p.isColor(Piece.WHITE)?0:2]){
                         out=append(out,vSize++,new CastelMove(n,n+2));
                     }
                 }
@@ -531,7 +591,7 @@ public class Board
                    // System.out.println("inserito "+ intToCords(i)[0]+ " "+ intToCords(i)[1]+" N: "+i+" Dir: "+d);
                    if(table[i]!=null && table[i].color()!=p.color())
                    {
-                       out=append(out,vSize++,new Move(n,i,table[i])); 
+                       out=append(out,vSize++,new Move(n,i,table[i],table[i].isMoved())); 
                        break;
                    } 
                    if(table[i]!=null)break; 
@@ -569,10 +629,10 @@ public class Board
                             out=append(out,vSize++,new PromotionMove(n,n+moviment*8,k));
                         }
                         if(n%8!=0 && table[(n+moviment*8)-1]!=null && table[(n+moviment*8)-1].color()!=p.color()){
-                            out=append(out,vSize++,new PromotionMove(n,(n+moviment*8)-1,k,table[(n+moviment*8)-1]));
+                            out=append(out,vSize++,new PromotionMove(n,(n+moviment*8)-1,k,table[(n+moviment*8)-1],table[(n+moviment*8)-1].isMoved()));
                         }
                         if(n%8!=7 && table[(n+moviment*8)+1]!=null && table[(n+moviment*8)+1].color()!=p.color()){
-                            out=append(out,vSize++,new PromotionMove(n,(n+moviment*8)+1,k,table[(n+moviment*8)+1]));
+                            out=append(out,vSize++,new PromotionMove(n,(n+moviment*8)+1,k,table[(n+moviment*8)+1],table[(n+moviment*8)+1].isMoved()));
                         }
                     }
                 }
@@ -582,12 +642,12 @@ public class Board
                         out=append(out,vSize++,new Move(n,n+moviment*8));
                     }
                     if(n%8!=0 && table[(n+moviment*8)-1]!=null && table[(n+moviment*8)-1].color()!=p.color()){
-                        out=append(out,vSize++,new Move(n,(n+moviment*8)-1,table[(n+moviment*8)-1]));
+                        out=append(out,vSize++,new Move(n,(n+moviment*8)-1,table[(n+moviment*8)-1],table[(n+moviment*8)-1].isMoved()));
                     }else if(n%8!=0 && (n+moviment*8)-1 == enPassantSquare){
                         out=append(out,vSize++,new EnPassantMove(n,(n+moviment*8)-1,table[n-1]));
                     }
                     if(n%8!=7 && table[(n+moviment*8)+1]!=null  && table[(n+moviment*8)+1].color()!=p.color()){
-                        out=append(out,vSize++,new Move(n,(n+moviment*8)+1,table[(n+moviment*8)+1]));
+                        out=append(out,vSize++,new Move(n,(n+moviment*8)+1,table[(n+moviment*8)+1],table[(n+moviment*8)+1].isMoved()));
                     }else if(n%8!=7 && (n+moviment*8)+1 == enPassantSquare){
                         out=append(out,vSize++,new EnPassantMove(n,(n+moviment*8)+1,table[n+1]));
                     }
@@ -648,8 +708,33 @@ public class Board
         System.arraycopy(table, 0, out, 0, 64);
         return out;
     }
+
+    public static long perft(String fen, int moves)
+    {
+        Board b = new Board(fen);
+        return nPosition(b,moves,b.turn);
+    }
+    private static long nPosition(Board b,int depth,boolean player)
+    {
+        if(depth==0){
+            return 1;
+        }
+        long sum=0;
+
+        Move [] moves = b.legalMoves(player);
+
+        for(int i=0;i<moves.length;i++){
+
+            b.makeMove(moves[i]);  
+            sum+=nPosition(b,depth-1,!player);
+            b.unMakeMove(moves[i]);
+        }
+
+        return sum;
+    }
 }
 class NoPieceFoundException  extends RuntimeException{}
 class InvalidSquareException extends RuntimeException{}
 class InvalidFormatSettingException extends RuntimeException{}
+class InvalidFormatFenException extends RuntimeException{}
 class KingNotFoundException extends RuntimeException{}

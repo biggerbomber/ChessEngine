@@ -9,6 +9,7 @@ public class Piece
     public Piece(boolean color)
     {
         this.color=color;
+        moved=false;
     }
     public void moved(){
         moved=true;
