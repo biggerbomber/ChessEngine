@@ -7,7 +7,7 @@ public class BoardTester {
         b.setBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         //b.makeMove(new Move(63, 7, b.table[7]));
         System.out.println(b);
-        System.out.println("Posistion "+positionTester(b,maxDepth ,b.turn,""));
+       // System.out.println("Posistion "+positionTester(b,maxDepth ,b.turn,""));
         //System.out.println("Posistion "+Board.perft("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",maxDepth));
     }
     public static long positionTester(Board b,int depth,boolean color,String movelist)

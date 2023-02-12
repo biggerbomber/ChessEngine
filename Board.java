@@ -657,11 +657,12 @@ public class Board
     public String toString()
     {
        
-        String out="\n\n---------------------------------\n|";
+        //String out="\n\n---------------------------------\n|";
+        String out="  +---+---+---+---+---+---+---+---+\n8 |";
         for(int i=0;i<table.length;i++)
         {
             if((i)%8==0 && i!=63 && i!=0){
-                out+="\n---------------------------------\n|";
+                out+="\n  +---+---+---+---+---+---+---+---+\n"+(8-i/8)+" |";
             }
             if(table[i]==null){
                 out+=" "+" "+" |";
@@ -670,7 +671,8 @@ public class Board
             }
         }
 
-        out+="\n---------------------------------\n\n";
+        out+="\n  +---+---+---+---+---+---+---+---+\n";
+        out+="    a   b   c   d   e   f   g   h\n";
         return out;
     }
     public Piece [] getState()
@@ -702,6 +704,98 @@ public class Board
         }
 
         return sum;
+    }
+    public boolean inCheck(boolean color)
+    {
+        int kingPos=-1;
+        for(int i=0;i<=63;i++){
+            if(table[i]!=null && table[i] instanceof KingPiece && table[i].isColor(color))
+            {
+                kingPos=i;
+                break;
+            }
+        }
+        if(kingPos==-1){
+            throw new KingNotFoundException();
+        }
+        int [] direzioni ={-9,-7,7,9,-8,1,8,-1};
+        int [] modulo ={0,7,0,7,9,7,9,0};
+
+        for(int  d=4;d<direzioni.length;d++)
+        {
+            for(int i = kingPos+direzioni[d];i>=0 && i<64 && (i-+direzioni[d])%8!=modulo[d];i+=direzioni[d]){
+                if(table[i]!=null && table[i].color()!=color && (table[i] instanceof QueenPiece || table[i] instanceof RookPiece))
+                {
+                    return true;
+                }else if(table[i]!=null){
+                    break;
+                } 
+            }
+        }
+        for(int  d=0;d<4;d++)
+        {
+            for(int i = kingPos+direzioni[d];i>=0 && i<64 && (i-+direzioni[d])%8!=modulo[d];i+=direzioni[d]){
+                if(table[i]!=null && table[i].color()!=color && (table[i] instanceof QueenPiece || table[i] instanceof BishopPiece))
+                {
+
+                    return true;
+                }
+                else if(table[i]!=null){
+                    break;
+                } 
+            }
+        }
+        for(int  d=0;d<direzioni.length;d++)
+        {
+            for(int i = kingPos+direzioni[d];i>=0 && i<64 && (i-+direzioni[d])%8!=modulo[d];){
+                if(table[i]!=null && table[i].color()!=color && (table[i] instanceof KingPiece))
+                {
+                    return true;
+                }
+                break; 
+            }
+        }
+        int dirKing = color==Piece.WHITE?-1:1;
+        int maxKingRow =color==Piece.WHITE?8:1;
+        if(kingPos%8!=0 && intToCords(kingPos)[1]!=maxKingRow)
+        {
+
+            if(table[kingPos+8*dirKing-1] instanceof PawnPiece && !table[kingPos+8*dirKing-1].isColor(color) )
+            {
+
+                return true;
+            }
+        }
+
+        if(kingPos%8!=7 && intToCords(kingPos)[1]!=maxKingRow)
+        {
+
+            if(table[kingPos+8*dirKing+1] instanceof PawnPiece && !table[kingPos+8*dirKing+1].isColor(color))
+            {
+
+                return true;
+            }
+        }
+        int n= kingPos;
+        int [] kDri ={6,-10,-17,15,-15,17,-6,10};
+        int [] kMod = { 1,1,0,0,7,7,6,6};
+        int startD=0;
+        int endD=kDri.length;
+        if(n%8==kMod[0]){startD=2;}
+        if(n%8==kMod[2]){startD=4;}
+        if(n%8==kMod[5]){endD=4;}
+        if(n%8==kMod[7]){endD=6;}
+        for(int  d=startD;d<endD;d++)
+        {
+            for(int i = n+kDri[d];i>=0 && i<64 && (i-+kDri[d])%8!=kMod[d];){
+                if(table[i]!=null && table[i].color()!=color && (table[i] instanceof KnightPiece))
+                { 
+                    return true;
+                } 
+                break;
+            }
+        }
+        return false;
     }
 }
 class NoPieceFoundException  extends RuntimeException{}
