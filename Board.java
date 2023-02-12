@@ -135,7 +135,6 @@ public class Board
     public static int[] intToCords(int n)
     {
         if(n<0||n>63){
-            //System.out.print(n);
             throw new InvalidSquareException();
         }
         int [] out =new int[2];
@@ -201,10 +200,7 @@ public class Board
 
         if(!m.rev)
         {
-            //System.out.println(printMove(m));
-            //System.out.println(this);
             if(table[m.start]==null){
-                //System.out.println(printMove(m));
                 System.out.println(this);
                 throw new NoPieceFoundException(); 
             }
@@ -261,7 +257,6 @@ public class Board
                 table[m.end]=temp;  
             }
         }else{
-            //System.out.println("REV "+printMove(m));
             table[m.start].moved=m.beforeMoved;
             if(m instanceof CastelMove){
                 table[m.end]=table[m.start];
@@ -290,14 +285,12 @@ public class Board
 
                 table[m.end]= new PawnPiece(table[m.start].color());
                 table[m.start]=null;
-                //System.out.println("qua"+ m.pieceCap);
             }else{
                 Piece temp=table[m.start];
                 table[m.start]=null;
                 table[m.end]=temp; 
             }
             if(m.capture){
-                //System.out.println("laa "+ m.pieceCap);
                 table[m.start]=m.pieceCap;
                 table[m.start].moved=m.befMovcap;
             }
@@ -311,27 +304,10 @@ public class Board
         Move [] out = new Move[pm.length];
         int vSize=0;
         for(int i=0;i<pm.length;i++){
-            try{
-                //Piece [] test= new Piece[64];
-                //System.arraycopy(table,0,test,0,64);
+
                 if(isLegalMove(pm[i])){
                     out[vSize++]=pm[i];
                 }
-                /*if(table[cordsToInt(3,6)] instanceof PawnPiece){
-                    System.out.println("----------------------");
-                    System.out.print(printMove(pm[i]));
-                    System.out.println(this);
-                    System.out.println("----------------------");
-                }*/
-            }catch(KingNotFoundException e){
-                System.out.println(this);
-                System.out.println("king not found");
-                System.exit(1);
-            }catch(RuntimeException e){
-                System.out.println(this);
-                System.out.println(e);
-                System.out.println(printMove(pm[i]));
-            }
         }
         out=resize(out,vSize);
         return out;
@@ -341,7 +317,6 @@ public class Board
         {
             Move uno;
             Move due;
-           //int row = intToCords(m.start)[1];
             int dir = Integer.signum(m.end-m.start);
 
             uno= new Move(m.start,m.start);
@@ -481,7 +456,6 @@ public class Board
         }
         else if(p instanceof RookPiece)
         {
-            //System.out.println("TEst MOved "+ table[n].moved);
             for(int d=4;d<direzioni.length;d++)
             {
                 for(int i = n+direzioni[d];i>=0 && i<64 &&  (i-+direzioni[d])%8!=modulo[d];i+=direzioni[d]){
@@ -528,22 +502,19 @@ public class Board
             if(!p.isMoved()&& n%8==4){
 
                 int row=7*(p.isColor(Piece.WHITE)?0:1)+1;
-                //System.out.println("Row"+row+" N: "+n);
-               // System.out.println(table[cordsToInt(1,row)].isMoved()+" "+cordsToInt(1,row));
-               // System.out.println(table[cordsToInt(1,row)].color()==p.color());
                 if(table[cordsToInt(1,row)] instanceof RookPiece && !table[cordsToInt(1,row)].isMoved() && table[cordsToInt(1,row)].color()==p.color())
                 {
                     boolean valid=true;
-                    //System.out.println("Row"+row+" N: "+n);
+
                     for(int i=2;i<intToCords(n)[0];i++)
                     {
-                        //System.out.println(cordsToInt(row, i));
+
                         if(table[cordsToInt(i,row)]!=null){
                             valid=false;
                             break;
                         }
                     }
-                   // System.out.println(valid+" "+row);
+
                     if(valid&&rightCastle[p.isColor(Piece.WHITE)?1:3]){
                         out=append(out,vSize++,new CastelMove(n,n-2));
                     }
@@ -567,9 +538,9 @@ public class Board
         }
         else if(p instanceof KnightPiece)
         {
-            //int [] kDri ={-17,-15,-6,10,17,15,6,-10};
+
             int [] kDri ={6,-10,-17,15,-15,17,-6,10};
-            //int [] kMod = { 0,7,6,6,7,0,1,1};
+
             int [] kMod = { 1,1,0,0,7,7,6,6};
             int startD=0;
             int endD=kDri.length;
@@ -588,7 +559,7 @@ public class Board
             for(int  d=startD;d<endD;d++)
             {
                 for(int i = n+kDri[d];i>=0 && i<64 && (i-+kDri[d])%8!=kMod[d];){
-                   // System.out.println("inserito "+ intToCords(i)[0]+ " "+ intToCords(i)[1]+" N: "+i+" Dir: "+d);
+                  
                    if(table[i]!=null && table[i].color()!=p.color())
                    {
                        out=append(out,vSize++,new Move(n,i,table[i],table[i].isMoved())); 
