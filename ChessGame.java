@@ -6,6 +6,7 @@ public class ChessGame {
         if(args.length<1 || (!args[0].equals("1") && !args[0].equals("0")))
         {
             System.out.println("In riga di comando specificare la modalità di avvio:\n 0 - player vs player\n 1 - player vs bot(random)");
+            System.exit(1);
         }
         if(args[0].equals("0"))
         {
