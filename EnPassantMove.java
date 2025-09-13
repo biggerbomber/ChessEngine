@@ -11,6 +11,7 @@ public class EnPassantMove extends Move {
         out=new EnPassantMove(end,start,pieceCap);
         
         out.rev=true;
+        out.prevEnPass=prevEnPass;
         return out;
     }
 }

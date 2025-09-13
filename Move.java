@@ -1,6 +1,7 @@
 
 public class Move
 {
+    public static Board b=null;
     public final int start;
     public final int end;
     public final boolean capture;
@@ -8,6 +9,7 @@ public class Move
     public boolean rev;
     public boolean beforeMoved=false;
     public boolean befMovcap;
+    public int prevEnPass=-10;
     public Move(int start,int end)
     {
         this.start=start;
@@ -56,6 +58,20 @@ public class Move
         }
         out.rev=true;
         out.beforeMoved=beforeMoved;
+        out.prevEnPass=prevEnPass;
         return out;
     }
+    /*public int compareTo(Object other)
+    {
+        return 1;
+    }
+    public int evalMove()
+    {
+        int eval=0;
+        if(capture)
+        {
+
+        }
+
+    }*/
 }

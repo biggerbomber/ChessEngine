@@ -33,6 +33,7 @@ public class PromotionMove extends Move {
             out = new PromotionMove(end,start,piecePromoted,pieceCap,befMovcap);
         }
         out.rev=true;
+        out.prevEnPass=prevEnPass;
         return out;
     }
 }

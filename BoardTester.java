@@ -4,7 +4,7 @@ public class BoardTester {
     public static void main(String [] args)
     {
         Board b= new Board();
-        b.setBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        b.setBoard("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
         //b.makeMove(new Move(63, 7, b.table[7]));
         System.out.println(b);
        // System.out.println("Posistion "+positionTester(b,maxDepth ,b.turn,""));

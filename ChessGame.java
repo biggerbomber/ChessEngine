@@ -1,6 +1,6 @@
 import java.util.Scanner;
 public class ChessGame {
-    
+    public static int MAX_DEPTH=6;
     public static void main (String [] args)
     {
         if(args.length<1 || (!args[0].equals("1") && !args[0].equals("0")))
@@ -43,7 +43,7 @@ public class ChessGame {
                     System.out.println("invalid sintax or invalid start|end square, please try again");
                     break;
                 }
-            
+
                 for(Move m : leg)
                 {
                     if(m.start==mov[0]&&m.end==mov[1])
@@ -75,6 +75,10 @@ public class ChessGame {
                 }
                 System.exit(0);
             }
+            if(b.inCheck(b.turn))
+                {
+                    System.out.println("check");
+                }
             System.out.println(b);
             System.out.println(turno(b.turn)+" to move");
         }
@@ -100,6 +104,8 @@ public class ChessGame {
     {
         System.out.println("Inizializzazione della partita...");
         Board b = new Board();
+        b.setBoard("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+        Move.b=b;
         System.out.println(b);
         System.out.println(turno(b.turn)+" to move");
         System.out.print("Move?  <start><end> | r(resign)");
@@ -147,10 +153,10 @@ public class ChessGame {
                     continue;
                 }
             }else
-            {
+            {//bot
                 Move [] move = b.legalMoves(b.turn);
-                int i= (int) (move.length*Math.random());
-                b.makeMove(move[i]);
+                //int i= (int) (move.length*Math.random());
+                b.makeMove(ChessEngine.bestMove(b, move, MAX_DEPTH, false));
             }
             b.turn=!b.turn;
             if(b.legalMoves(b.turn).length==0)

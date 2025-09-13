@@ -10,4 +10,8 @@ public class PawnPiece extends Piece
     {
         return ""+Board.charSet.charAt((0+6*(isColor(BLACK)? 1:0)));
     }
+    public double toScore()
+    {
+        return 1000;
+    } 
 }

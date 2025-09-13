@@ -1,6 +1,6 @@
 public class FirstPawnMove extends Move {
 
-    int prevEnPass=-1;
+    
     public FirstPawnMove(int start,int end)
     {
         super(start, end);

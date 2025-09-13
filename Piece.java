@@ -30,4 +30,8 @@ public class Piece
     {
         return "x";
     }
+    public double toScore()
+    {
+        return 0;
+    } 
 }

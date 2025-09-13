@@ -1,6 +1,8 @@
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+
+
 import java.io.*;
 public class Board
 {
@@ -205,8 +207,8 @@ public class Board
                 throw new NoPieceFoundException(); 
             }
             table[m.start].moved=true;
-            if(m instanceof FirstPawnMove){
-                ((FirstPawnMove)m).prevEnPass=enPassantSquare;
+            m.prevEnPass=enPassantSquare;
+            if(m instanceof FirstPawnMove){    
                 enPassantSquare=m.end+(table[m.start].isColor(Piece.WHITE)?8:-8);
                 table[m.end]=table[m.start];
                 table[m.start]=null;
@@ -258,6 +260,7 @@ public class Board
             }
         }else{
             table[m.start].moved=m.beforeMoved;
+            enPassantSquare=m.prevEnPass;
             if(m instanceof CastelMove){
                 table[m.end]=table[m.start];
                 table[m.start]=null;
@@ -680,8 +683,7 @@ public class Board
         Piece [] out = new Piece[64];
         System.arraycopy(table, 0, out, 0, 64);
         return out;
-    }
-
+    }    
     public static long perft(String fen, int moves)
     {
         Board b = new Board(fen);
@@ -706,6 +708,7 @@ public class Board
         return sum;
     }
     public boolean inCheck(boolean color)
+
     {
         int kingPos=-1;
         for(int i=0;i<=63;i++){
@@ -797,6 +800,67 @@ public class Board
         }
         return false;
     }
+    public boolean equals(Object other)
+    {
+       if(!(other instanceof Board))
+       {
+            return false;
+       }
+       Board oth=(Board)other;
+       for(int i=0;i<64;i++)
+       {
+            if(table[i]!=null&&oth.table[i]!=null)
+            {
+                if(table[i].getClass().equals(oth.table[i].getClass()))
+                {
+                    continue;
+                }
+            } else if(table[i]==null&&oth.table[i]==null)
+            {
+                continue;
+            }
+            return false;
+       }
+       if(enPassantSquare!=oth.enPassantSquare || turn!=oth.turn)
+       {
+            return false;
+       }
+       for(int i=0;i<4;i++)
+       {
+            if(rightCastle[i]!=oth.rightCastle[i]){
+                return false;   
+            }
+       }
+       return true;
+    }
+    public int hashCode()
+    {
+        int hash=0;
+        int PRIME=379501621;
+        for(int i=0;i<64;i++)
+        {
+            if(table[i]!=null)
+            {
+                hash+=powMod(7*(int)table[i].toScore()/1000,i,PRIME);
+            }
+        }
+        hash+=enPassantSquare*11+(turn?-1:1)*7056;
+        for(int i=0;i<4;i++)
+        {
+            hash+=(rightCastle[i]?-1:1)*i*17;
+        }
+        return hash;
+    }
+    private int powMod(int b,int p, int mod)
+    {
+        if(p==0)return 1;
+        if(p==1) return b%mod;
+        int pow =powMod(b,p/2,mod);
+        pow=(pow*pow)%mod;
+        if(p%2==1)pow*=b;
+        return pow%mod;
+    }
+
 }
 class NoPieceFoundException  extends RuntimeException{}
 class InvalidSquareException extends RuntimeException{}

@@ -9,6 +9,7 @@ public class CastelMove extends Move {
         CastelMove out = new CastelMove(end,start);
         out.rev=true;
         out.beforeMoved=false;
+        out.prevEnPass=prevEnPass;
         return out;
     }
 }
