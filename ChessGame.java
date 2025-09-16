@@ -1,6 +1,6 @@
 import java.util.Scanner;
 public class ChessGame {
-    public static int MAX_DEPTH=6;
+    public static int MAX_DEPTH=5;
     public static void main (String [] args)
     {
         if(args.length<1 || (!args[0].equals("1") && !args[0].equals("0")))
@@ -104,7 +104,7 @@ public class ChessGame {
     {
         System.out.println("Inizializzazione della partita...");
         Board b = new Board();
-        b.setBoard("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+        //b.setBoard("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
         Move.b=b;
         System.out.println(b);
         System.out.println(turno(b.turn)+" to move");

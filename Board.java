@@ -1,7 +1,7 @@
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-
+import java.util.Random;
 
 import java.io.*;
 public class Board
@@ -189,8 +189,16 @@ public class Board
                 out=appendAll(out,possiblePieceMove(i));
             }
         }
-        return out; 
-    }
+        Random rand = new Random();
+        for (int i = out.length - 1; i > 0; i--) {
+            int j = rand.nextInt(i + 1);
+            Move tmp = out[i];
+            out[i] = out[j];
+            out[j] = tmp;
+        }
+
+    return out; 
+}
     private void checkStatus()
     {
         if(charSet == null || charSet.length()<12){
